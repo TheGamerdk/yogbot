@@ -1,10 +1,10 @@
 const DiscordCommand = require('../DiscordCommand.js');
-const spawn = require('child_process').spawn;
+const https = require('https');
 
 class DiscordCommandReboot extends DiscordCommand {
 
   constructor(subsystem) {
-    super("reboot", "Reboot the server.", 'reboot', subsystem);
+    super("reboot", "Reboot the bot.", 'reboot', subsystem);
   }
 
   onRun(message, permissions, args) {
@@ -19,10 +19,19 @@ class DiscordCommandReboot extends DiscordCommand {
 
     switch (rebootOption) {
     case 'hard':
-      var taskkill = spawn('taskkill', ['/F', '/IM', 'dreamdaemon.exe']);
-      taskkill.on('exit', (code) => {
-        message.reply("Hard reboot exited with exit code: " + code);
-      });
+        https.get(config.reboot_url, (resp) => {
+          let data = '';
+
+          resp.on('data', (chunk) => {
+            data += chunk;
+          });
+
+          resp.on('end', () => {
+            console.log(data);
+          });
+        });
+        message.reply('Hard rebooting server.');
+    
       break;
     case 'soft':
       var request = "?reboot";
@@ -37,9 +46,7 @@ class DiscordCommandReboot extends DiscordCommand {
       break;
     case 'bot':
       message.reply("Updating & Rebooting Bot.").then(() => {
-        this.subsystem.manager.getSubsystem("Updater").update((data) => {
-          message.channel.send(data);
-        });
+        process.exit(0);
       });
       break;
     default:
